@@ -1,12 +1,3 @@
-console.log(`                                                       
-m      #                                     "         
-mm#mm  # mm    m mm   mmm    mmm           mmm    mmm  
-#      #"  #   #"  " #"  #  #"  #            #   #   " 
-#      #   #   #     #""""  #""""            #    """m 
-"mm    #   #   #     "#mm"  "#mm"    #       #   "mmm" 
-                                            #         
-                                          ""             -BY SK027
-`);
 /*
 =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
         Imports
@@ -16,6 +7,16 @@ import './styles/style.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
+
+console.log(`                                                       
+m      #                                     "         
+mm#mm  # mm    m mm   mmm    mmm           mmm    mmm  
+#      #"  #   #"  " #"  #  #"  #            #   #   " 
+#      #   #   #     #""""  #""""            #    """m 
+"mm    #   #   #     "#mm"  "#mm"    #       #   "mmm" 
+                                            #         
+                                          ""             -BY SK027
+`);
 /*
 =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
         Check mobile phone
