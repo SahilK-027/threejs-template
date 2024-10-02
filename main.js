@@ -1,138 +1,104 @@
-/*
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-        Imports
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*= 
-*/
-import './styles/style.css';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import "./styles/style.css";
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
+class ThreeJSTemplate {
+  constructor() {
+    this.initScene();
+    this.initCamera();
+    this.initRenderer();
+    this.initLights();
+    this.initMesh();
+    this.initControls();
+    this.addEventListeners();
+    this.animate();
+  }
 
-console.log(`                                                       
-m      #                                     "         
-mm#mm  # mm    m mm   mmm    mmm           mmm    mmm  
-#      #"  #   #"  " #"  #  #"  #            #   #   " 
-#      #   #   #     #""""  #""""            #    """m 
-"mm    #   #   #     "#mm"  "#mm"    #       #   "mmm" 
-                                            #         
-                                          ""             -BY SK027
-`);
-/*
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-        Check mobile phone
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*= 
-*/
-const mobile = window.matchMedia("(max-width: 480px)").matches;
-/*
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-        Canvas
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*= 
-*/
-const canvas = document.querySelector('canvas.webgl');
+  initScene() {
+    this.scene = new THREE.Scene();
+    this.clock = new THREE.Clock();
+  }
 
-/*
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-        Scene
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*= 
-*/
-const scene = new THREE.Scene();
+  initCamera() {
+    this.sizes = {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    };
+    this.camera = new THREE.PerspectiveCamera(
+      75,
+      this.sizes.width / this.sizes.height,
+      0.1,
+      100
+    );
+    this.camera.position.z = 3;
+    this.scene.add(this.camera);
+  }
 
-/*
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-        Mesh
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*= 
-*/
-let radius = mobile ? 0.8 : 1;
+  initRenderer() {
+    this.canvas = document.querySelector("canvas.webgl");
+    this.renderer = new THREE.WebGLRenderer({
+      canvas: this.canvas,
+      alpha: true,
+    });
+    this.renderer.setSize(this.sizes.width, this.sizes.height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  }
 
-const geometry = new THREE.SphereGeometry( radius, 32, 16 );
-const material = new THREE.MeshPhongMaterial({ color: "#7444ff", wireframe: true });
-const mesh = new THREE.Mesh(geometry, material);
-scene.add(mesh);
+  initLights() {
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    const hemisphereLight = new THREE.HemisphereLight(0x7444ff, 0xff00bb, 0.5);
+    const pointLight = new THREE.PointLight(0x7444ff, 1, 100);
+    pointLight.position.set(0, 3, 4);
 
-/*
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-        Light
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*= 
-*/
-const ambientLight = new THREE.AmbientLight(0x404040); // soft white light
-scene.add(ambientLight);
-// White directional light at half intensity shining from the top.
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-scene.add(directionalLight);
+    this.scene.add(ambientLight, directionalLight, hemisphereLight, pointLight);
+  }
 
-const hemisphereLight = new THREE.HemisphereLight(0x7444ff, 0xff00bb, 0.5 );
-scene.add( hemisphereLight );
+  initMesh() {
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshStandardMaterial({ color: "#7444ff" });
+    this.mesh = new THREE.Mesh(geometry, material);
+    this.scene.add(this.mesh);
+  }
 
-const pointLight = new THREE.PointLight( 0x7444ff, 1, 100 );
-pointLight.position.set( 0, 3, 4 );
-scene.add( pointLight );
-/*
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-        Resizing
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*= 
-*/
-const sizes = {
-  width: window.innerWidth,
-  height: window.innerHeight
-};
+  initControls() {
+    this.controls = new OrbitControls(this.camera, this.canvas);
+    this.controls.enableDamping = true;
+  }
 
-window.addEventListener('resize', () => {
-  // Update sizes
-  sizes.width = window.innerWidth;
-  sizes.height = window.innerHeight;
+  addEventListeners() {
+    window.addEventListener("resize", () => this.onResize());
+  }
 
-  // Update camera
-  camera.aspect = sizes.width / sizes.height;
-  camera.updateProjectionMatrix();
+  onResize() {
+    this.sizes.width = window.innerWidth;
+    this.sizes.height = window.innerHeight;
 
-  // Update renderer
-  renderer.setSize(sizes.width, sizes.height);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-})
+    this.camera.aspect = this.sizes.width / this.sizes.height;
+    this.camera.updateProjectionMatrix();
 
-/*
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-        Cameras
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*= 
-*/
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height);
-camera.position.z = 3;
-scene.add(camera);
+    this.renderer.setSize(this.sizes.width, this.sizes.height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  }
 
-// Renderer
-const renderer = new THREE.WebGLRenderer({
-  canvas: canvas,
-  alpha: true
-});
-renderer.setSize(sizes.width, sizes.height);
-/*
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-        Cameras
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*= 
-*/
-const controls = new OrbitControls(camera, canvas);
-controls.enableDamping = true;
+  animate() {
+    const elapsedTime = this.clock.getElapsedTime();
 
-/*
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-        Animation Frame
-=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*= 
-*/
-const clock = new THREE.Clock();
-let previousTime = 0;
-const tick = () => {
-  const elapsedTime = clock.getElapsedTime();
-  const deltaTime = elapsedTime - previousTime;
-  previousTime = elapsedTime;
+    // Animate mesh
+    this.mesh.rotation.x = elapsedTime * 0.5;
+    this.mesh.rotation.y = elapsedTime * 0.5;
+    this.mesh.rotation.z = elapsedTime * 0.5;
 
-  mesh.rotation.x += deltaTime *  0.7;
-  mesh.rotation.y += deltaTime *  0.7;
-  mesh.rotation.z += deltaTime *  0.7;
+    // Update controls
+    this.controls.update();
 
-  // Update controls
-  controls.update();
+    // Render
+    this.renderer.render(this.scene, this.camera);
 
-  renderer.render(scene, camera);
-  window.requestAnimationFrame(tick);
+    // Call animate again on the next frame
+    window.requestAnimationFrame(() => this.animate());
+  }
 }
-tick();
+
+// Initialize the template
+new ThreeJSTemplate();
