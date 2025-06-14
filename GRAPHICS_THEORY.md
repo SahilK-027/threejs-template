@@ -198,3 +198,111 @@ Here’s what different types of texture maps do:
 | `MeshStandardMaterial` | ✅ PBR     | ✅ Yes  | ✅ High     | Realistic     | 🔵 Slower   | Modern realism               |
 | `MeshPhysicalMaterial` | ✅ PBR++   | ✅ Yes  | ✅✅ Ultra  | Glass, fabric | 🔴 Slowest  | Advanced realism             |
 | `MeshToonMaterial`     | ✅ Yes     | ✅ Yes  | ❌ Stylized | Cartoon       | 🟢 Good     | Toon/anime effects           |
+
+## The Two RGB Worlds: Linear vs. sRGB
+
+### sRGB: Perceptual, Non‑Linear Space
+
+- **Designed for our eyes**: Humans are more sensitive to dark tones than bright ones, so sRGB applies a gamma curve that allocates more precision where we notice it most.
+- **Great for display**: Images and textures saved in sRGB “look right” on monitors, TVs, phones.
+- **Bad for math**: Because the relationship between stored values and actual intensity is non‑linear, blending or lighting computations on sRGB data produce incorrect results—shading that’s too bright or too dark.
+
+### Linear: The Math‑Friendly Space
+
+- **True proportionality**: A value of 0.5 is exactly half the light of 1.0.
+- **Essential for lighting**: All physically based rendering (PBR) lighting, shadowing, and material math assume linear arithmetic to model energy conservation and realistic falloff.
+
+---
+
+## Mixing Spaces: The Root of Many Rendering Bugs
+
+Since textures, colors, and light intensities all start as simple RGB numbers, it’s easy to forget which space you’re in. Accidentally lighting in sRGB space leads to:
+
+- **Gamma artifacts**—unexpected banding, blow‑outs, or muddy shadows
+- **Inaccurate color shifts**—your bright highlights won’t “feel” physically correct
+
+---
+
+## Why HDR? Capturing Real‑World Brightness
+
+Standard (LDR) renders clamp values into [0…1], so a blazing sun and a candle flame both end up somewhere in that tiny range. HDR (High Dynamic Range) lets you:
+
+1. **Use floating‑point buffers** (e.g. `RGBE`, `RGBA16F`) so intensities ost.
+2. **Drive PBR shaders**—materials like `MeshStandardMaterial` or `MeshPhysicalMaterial` expect HDR input to simulate metallic reflections, bloom, etc.
+3. **Preserve contrast**—from the deepest shadows (0.01) to the brightest speculars (1000.0+).
+
+---
+
+## Tone Mapping: From HDR to Your Monitor
+
+Monitors still only accept [0…1] in sRGB, so you need a “compressor”:
+
+- **Linear**: Straight scale of all values; often too flat or washed‑out.
+- **Reinhard**: A filmic classic:
+  ```jsx
+  result = color / (color + 1);
+  ```
+  → rolls off bright areas into soft white.
+- **Cineon**: Designed to mimic film scan response.
+- **ACES**: Academies’ standard: more gamut, more contrast, filmic but controlled.
+- **AcesNeutral (AgX/Neutral)**: A newer, subtler “balanced” look—minimal hue shifts, realistic preserves.
+
+Tone‑mapping operators each have trade‑offs in contrast, saturation, and highlight roll‑off; choosing one depends on your artistic needs.
+
+---
+
+## Putting It All Together in Three.js
+
+1. **Textures & Color Spaces**
+
+   - **Color textures** (diffus, emissive):
+     ```jsx
+     texture.colorSpace = THREE.SRGBColorSpace;
+     ```
+   - **Data textures** (normal, height, roughness, metalness):
+     ```jsx
+     texture.colorSpace = THREE.LinearColorSpace;
+     ```
+
+   Data maps do not represent “color” but raw values, so they must stay linear.
+
+2. **Scene Colors**
+
+   When you write `new THREE.Color(0xffeecc)`, assume sRGB. Three.js will convert to linear under-the-hood before lighting.
+
+3. **Renderer Setup**
+
+   ```jsx
+   const renderer = new THREE.WebGLRenderer({ antialias: true });
+   renderer.outputColorSpace = THREE.SRGBColorSpace;
+   renderer.toneMapping = THREE.ACESFilmicToneMapping; // or Reinhard, Cineon, rtc.
+   renderer.toneMappingExposure = 1.0; // tweak for scene brightnes
+   ```
+
+4. **Lighting Calculations**
+
+   Three.js does all lighting in linear space automatically, so long as your inputs are tagged correctly.
+
+5. **Custom Shaders**
+
+   If you write GLSL:
+
+   ```glsl
+   vec3 linearColor = pow(texel.rgb, vec3(2.2));   // sRGB → linear
+   // … lighting math in linear …
+   vec3 finalSRGB = pow(linearColor, vec3(1.0/2.2)); // linear → sRGB
+   gl_FragColor = vec4(finalSRGB, texel.a);
+   ```
+
+---
+
+## Best Practices & Gotchas
+
+- **Always label your textures** with the correct `colorSpace`.
+- **Keep lighting math linear**—never blend or add raw sRGB values.
+- **Pick a tone‑mapper** early, then adjust exposures as you light your scene.
+- **Check your final look** on an sRGB‑calibrated display; HDR previews in some browsers/OSs can deceive you.
+
+---
+
+By respecting the separation between perceptual (sRGB) and arithmetic (linear) spaces, leveraging HDR buffers, and choosing an appropriate tone‑mapping curve, you unlock true-to-life lighting from the soft glow of a candle to the blinding radiance of the sun.
